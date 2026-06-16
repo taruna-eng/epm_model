@@ -1,0 +1,5 @@
+ID,customerName,email,phone,city,country_code,creditLimit
+cu01cu01-0001-0001-0001-000000000001,Infosys Technologies,procurement@infosys.com,+91-80-12345678,Bangalore,IN,5000000.00
+cu02cu02-0002-0002-0002-000000000002,TCS Digital,orders@tcs.com,+91-22-87654321,Mumbai,IN,3000000.00
+cu03cu03-0003-0003-0003-000000000003,Wipro Ltd,supplies@wipro.com,+91-80-11223344,Bangalore,IN,4000000.00
+cu04cu04-0004-0004-0004-000000000004,HCL Technologies,purchase@hcl.com,+91-120-9988776,Noida,IN,2500000.00

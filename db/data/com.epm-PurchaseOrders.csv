@@ -1,0 +1,4 @@
+ID,poNumber,supplier_ID,orderDate,expectedDate,totalAmount,currency_code,status,notes
+f1a2b3c4-d5e6-7890-abcd-ef1234567890,PO-001,s1s1s1s1-1111-1111-1111-111111111111,2026-01-15,2026-01-30,15000.00,USD,Received,Regular monthly restock
+f2b3c4d5-e6f7-8901-bcde-f12345678901,PO-002,s2s2s2s2-2222-2222-2222-222222222222,2026-02-01,2026-02-15,8500.00,EUR,Approved,Urgent restock for low items
+f3c4d5e6-f7a8-9012-cdef-123456789012,PO-003,s3s3s3s3-3333-3333-3333-333333333333,2026-02-20,2026-03-05,22000.00,USD,Draft,Quarterly bulk order

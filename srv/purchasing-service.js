@@ -1,0 +1,246 @@
+const cds = require('@sap/cds');
+
+module.exports = function () {
+
+  // ═══════════════════════════════════════════════
+  //  SUBMIT Purchase Order
+  // ═══════════════════════════════════════════════
+  this.on('submit', 'PurchaseOrders', async (req) => {
+    const { ID } = req.params[0];
+    const { PurchaseOrders, PurchaseOrderItems, Suppliers } = cds.entities;
+
+    // Fetch the PO
+    const po = await SELECT.one.from(PurchaseOrders).where({ ID });
+    if (!po) req.reject(404, 'Purchase Order not found');
+
+    // Rule: Only Draft POs can be submitted
+    if (po.status !== 'Draft') {
+      req.reject(400,
+        `Cannot submit: PO is in "${po.status}" status. Only Draft POs can be submitted.`
+      );
+    }
+
+    // Rule: PO must have at least one item
+    const items = await SELECT.from(PurchaseOrderItems).where({ purchaseOrder_ID: ID });
+    if (items.length === 0) {
+      req.reject(400, 'Cannot submit: PO has no items. Add at least one item first.');
+    }
+
+    // Rule: Total amount must be calculated
+    const total = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+
+    // Update status
+    await UPDATE(PurchaseOrders).set({
+      status: 'Submitted',
+      totalAmount: +total.toFixed(2)
+    }).where({ ID });
+
+    // Get supplier name for event
+    const supplier = await SELECT.one.from(Suppliers).where({ ID: po.supplier_ID });
+
+    // Emit event
+    await this.emit('POSubmitted', {
+      poId: ID,
+      poNumber: po.poNumber,
+      supplierName: supplier?.supplierName || 'Unknown',
+      totalAmount: +total.toFixed(2),
+      submittedBy: req.user.id
+    });
+
+    return {
+      status: 'Submitted',
+      message: `PO ${po.poNumber} submitted for approval. Total: $${total.toFixed(2)} (${items.length} items)`
+    };
+  });
+
+  // ═══════════════════════════════════════════════
+  //  APPROVE Purchase Order
+  // ═══════════════════════════════════════════════
+  this.on('approve', 'PurchaseOrders', async (req) => {
+    const { ID } = req.params[0];
+    const { comment } = req.data;
+    const { PurchaseOrders } = cds.entities;
+
+    const po = await SELECT.one.from(PurchaseOrders).where({ ID });
+    if (!po) req.reject(404, 'Purchase Order not found');
+
+    if (po.status !== 'Submitted') {
+      req.reject(400,
+        `Cannot approve: PO is in "${po.status}" status. Only Submitted POs can be approved.`
+      );
+    }
+
+    await UPDATE(PurchaseOrders).set({
+      status: 'Approved'
+    }).where({ ID });
+
+    // Emit event
+    await this.emit('POApproved', {
+      poId: ID,
+      poNumber: po.poNumber,
+      approvedBy: req.user.id,
+      comment: comment || ''
+    });
+
+    return {
+      status: 'Approved',
+      message: `PO ${po.poNumber} has been approved.${comment ? ' Comment: ' + comment : ''}`,
+      approvedAt: new Date().toISOString()
+    };
+  });
+
+  // ═══════════════════════════════════════════════
+  //  REJECT Purchase Order
+  // ═══════════════════════════════════════════════
+  this.on('reject', 'PurchaseOrders', async (req) => {
+    const { ID } = req.params[0];
+    const { reason } = req.data;
+    const { PurchaseOrders } = cds.entities;
+
+    const po = await SELECT.one.from(PurchaseOrders).where({ ID });
+    if (!po) req.reject(404, 'Purchase Order not found');
+
+    if (po.status !== 'Submitted') {
+      req.reject(400, `Cannot reject: PO is in "${po.status}" status. Only Submitted POs can be rejected.`);
+    }
+
+    if (!reason || reason.trim() === '') {
+      req.reject(400, 'Rejection reason is required. Please explain why this PO is being rejected.');
+    }
+
+    await UPDATE(PurchaseOrders).set({
+      status: 'Rejected'
+    }).where({ ID });
+
+    // Emit event
+    await this.emit('POrejected', {
+      poId: ID,
+      poNumber: po.poNumber,
+      rejectedBy: req.user.id,
+      reason: reason
+    });
+
+    return {
+      status: 'Rejected',
+      message: `PO ${po.poNumber} rejected. Reason: ${reason}`
+    };
+  });
+
+  // ═══════════════════════════════════════════════
+  //  RECEIVE Purchase Order (goods arrived)
+  // ═══════════════════════════════════════════════
+  this.on('receive', 'PurchaseOrders', async (req) => {
+    const { ID } = req.params[0];
+    const { notes } = req.data;
+    const { PurchaseOrders, PurchaseOrderItems, Products } = cds.entities;
+
+    const po = await SELECT.one.from(PurchaseOrders).where({ ID });
+    if (!po) req.reject(404, 'Purchase Order not found');
+
+    if (po.status !== 'Approved') {
+      req.reject(400, `Cannot receive: PO must be "Approved". Current status: "${po.status}"`);
+    }
+
+    // Update PO status
+    await UPDATE(PurchaseOrders).set({
+      status: 'Received'
+    }).where({ ID });
+
+    // Increase stock for each item
+    const items = await SELECT.from(PurchaseOrderItems).where({ purchaseOrder_ID: ID });
+
+    for (const item of items) {
+      const product = await SELECT.one.from(Products).where({ ID: item.product_ID });
+      if (product) {
+        await UPDATE(Products).set({
+          stock: product.stock + item.quantity
+        }).where({ ID: item.product_ID });
+      }
+    }
+
+    return {
+      status: 'Received',
+      message: `PO ${po.poNumber} received. Stock updated for ${items.length} products.${notes ? ' Notes: ' + notes : ''}`
+    };
+  });
+
+  // ═══════════════════════════════════════════════
+  //  BOUND FUNCTION: getSummary
+  // ═══════════════════════════════════════════════
+  this.on('getSummary', 'PurchaseOrders', async (req) => {
+    const { ID } = req.params[0];
+    const { PurchaseOrders, PurchaseOrderItems, Suppliers } = cds.entities;
+
+    const po = await SELECT.one.from(PurchaseOrders).where({ ID });
+    if (!po) req.reject(404, 'Purchase Order not found');
+
+    const items = await SELECT.from(PurchaseOrderItems).where({ purchaseOrder_ID: ID });
+    const supplier = await SELECT.one.from(Suppliers).where({ ID: po.supplier_ID });
+
+    // Calculate days open
+    const createdDate = new Date(po.createdAt || po.orderDate);
+    const today = new Date();
+    const daysOpen = Math.floor((today - createdDate) / (1000 * 60 * 60 * 24));
+
+    const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+
+    return {
+      poNumber: po.poNumber,
+      supplier: supplier?.supplierName || 'Unknown',
+      itemCount: items.length,
+      totalAmount: +totalAmount.toFixed(2),
+      status: po.status,
+      daysOpen: daysOpen
+    };
+  });
+
+  // ═══════════════════════════════════════════════
+  //  UNBOUND FUNCTION: getPurchasingDashboard
+  // ═══════════════════════════════════════════════
+  this.on('getPurchasingDashboard', async (req) => {
+    const { PurchaseOrders } = cds.entities;
+
+    const allPOs = await SELECT.from(PurchaseOrders);
+
+    return {
+      totalPOs: allPOs.length,
+      draftCount: allPOs.filter(p => p.status === 'Draft').length,
+      pendingApproval: allPOs.filter(p => p.status === 'Submitted').length,
+      approvedCount: allPOs.filter(p => p.status === 'Approved').length,
+      totalSpend: +allPOs
+        .filter(p => ['Approved', 'Received'].includes(p.status))
+        .reduce((sum, p) => sum + (p.totalAmount || 0), 0)
+        .toFixed(2)
+    };
+  });
+
+  // ═══════════════════════════════════════════════
+  //  EVENT LISTENERS
+  // ═══════════════════════════════════════════════
+
+  this.on('POSubmitted', (msg) => {
+    const { poNumber, supplierName, totalAmount, submittedBy } = msg.data;
+    console.log(`\n📋 [PO SUBMITTED] ${poNumber}`);
+    console.log(`   Supplier: ${supplierName}`);
+    console.log(`   Amount: $${totalAmount}`);
+    console.log(`   By: ${submittedBy}`);
+    console.log(`   → Waiting for approval...\n`);
+  });
+
+  this.on('POApproved', (msg) => {
+    const { poNumber, approvedBy, comment } = msg.data;
+    console.log(`\n✅ [PO APPROVED] ${poNumber}`);
+    console.log(`   Approved by: ${approvedBy}`);
+    if (comment) console.log(`   Comment: ${comment}`);
+    console.log(`   → Ready for goods receipt\n`);
+  });
+
+  this.on('POrejected', (msg) => {
+    const { poNumber, rejectedBy, reason } = msg.data;
+    console.log(`\n❌ [PO REJECTED] ${poNumber}`);
+    console.log(`   Rejected by: ${rejectedBy}`);
+    console.log(`   Reason: ${reason}`);
+    console.log(`   → Returned to requester\n`);
+  });
+
+};

@@ -1,0 +1,4 @@
+ID,supplierName,contactPerson,email,phone,street,city,state,pincode,country_code,isActive
+s1s1s1s1-1111-1111-1111-111111111111,TechParts India,Amit Shah,amit@techparts.in,9876543210,100 MG Road,Bangalore,Karnataka,560001,IN,true
+s2s2s2s2-2222-2222-2222-222222222222,Global Electronics,Sarah Johnson,sarah@globalelec.com,+1-555-0101,200 Tech Blvd,San Jose,California,95110,US,true
+s3s3s3s3-3333-3333-3333-333333333333,Berlin Components,Klaus Mueller,klaus@berlincomp.de,+49-30-1234,50 Technikstr,Berlin,Berlin,10115,DE,true
