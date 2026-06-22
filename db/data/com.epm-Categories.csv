@@ -1,8 +1,8 @@
 ID,categoryName,description
 c001c001-0001-0001-0001-000000000001,Electronics,Electronic devices and accessories
-c002c002-0002-0002-0002-000000000002,Office Supplies,Paper, pens, and office equipment
-c003c003-0003-0003-0003-000000000003,Furniture,Desks, chairs, and storage
+c002c002-0002-0002-0002-000000000002,Office Supplies,"Paper, pens and office equipment"
+c003c003-0003-0003-0003-000000000003,Furniture,"Desks, chairs, and storage"
 c004c004-0004-0004-0004-000000000004,Software,Licenses and subscriptions
-c005c005-0005-0005-0005-000000000005,Networking,Routers, switches, and cables
+c005c005-0005-0005-0005-000000000005,Networking,"Routers, switches and cables"
 
 

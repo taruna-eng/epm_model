@@ -2,6 +2,7 @@
   "name": "epmfinal",
   "version": "1.0.0",
   "dependencies": {
+    "@cap-js/hana": "^2",
     "@sap/cds": "^9",
     "@sap/xssec": "^4"
   },
@@ -24,12 +25,6 @@
     "app/project1",
     "app/project2"
   ],
-
-
-
-
-
- 
   "cds": {
     "requires": {
       "auth": {
@@ -37,37 +32,38 @@
         "[development]": {
           "kind": "mocked",
           "users": {
-            "viewer@test.com": {
-              "password": "pass",
+            "viewer": {
+              "password": "viewer",
               "roles": ["Viewer"]
             },
-            "manager@test.com": {
-              "password": "pass",
-              "roles": ["PurchaseManager"]
+            "manager": {
+              "password": "manager",
+              "roles": ["PurchaseManager", "Viewer"]
             },
-            "admin@test.com": {
-              "password": "pass",
-              "roles": ["Administrator"]
+            "admin": {
+              "password": "admin",
+              "roles": ["Administrator", "PurchaseManager", "Viewer"]
+            },
+             
+
+            "alice": { "password": "pass", "roles": ["PurchaseManager"], "attr": { "Department": "Engineering" } },
+            "bob": { "password": "pass", "roles": ["PurchaseManager"], "attr": { "Department": "Marketing" } },
+            "carol": { "password": "pass", "roles": ["Viewer"] },
+            "dave": { "password": "pass", "roles": ["Administrator"] },
+            "eve": { "password": "pass", "roles": [] },
+
+
+
+
+
+            "anonymous": {
+              "password": "anon",
+              "roles": []
+              
             }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    }
-  }
-}
+          }
+        }
+      }
     }
   }
 }

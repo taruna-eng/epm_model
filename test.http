@@ -371,3 +371,19 @@ Content-Type: application/json
 ### Check dashboard after all operations
 ### ═══════════════════════════════════════════════
 GET {{base}}/getPurchasingDashboard()
+
+
+###
+GET http://localhost:34405/purchasing/PurchaseOrders
+
+###
+POST http://localhost:34405/purchasing/PurchaseOrders
+Authorization: Basic dmlld2VyOnZpZXdlcg==
+Content-Type: application/json
+
+{ "poNumber": "PO-TEST", "status": "Draft" }
+
+###
+GET http://localhost:37135/purchasing/PurchaseOrders
+
+###

@@ -178,10 +178,31 @@
 
 using { com.epm as db } from '../db/schema';
 
-service PurchasingService @(path: '/purchasing') {
+service PurchasingService @(path: '/purchasing', requires: 'authenticated-user')  {
 
 @odata.draft.enabled
-entity PurchaseOrders as projection on db.PurchaseOrders {
+@(requires: ['PurchaseManager', 'Administrator'])
+entity PurchaseOrders 
+@(restrict: [
+    { grant: 'READ', to: 'Viewer' },
+    { grant: ['READ', 'CREATE', 'UPDATE'], to: 'PurchaseManager'  },
+    { grant: '*', to: 'Administrator' }
+  ])
+
+
+
+
+
+as projection on db.PurchaseOrders 
+
+
+
+
+
+
+
+
+ {
 *,
 
 
@@ -203,12 +224,12 @@ items
 }
 actions {
 
-
+ @(requires: 'PurchaseManager')
 action submit() returns {
   status  : String;
   message : String;
 };
-
+ @(requires: 'PurchaseManager')
 action approve(
   comment : String(500)
 ) returns {
@@ -217,12 +238,34 @@ action approve(
   approvedAt : DateTime;
 };
 
+@(requires: 'PurchaseManager')
 action reject(
   reason : String(500)
 ) returns {
   status  : String;
   message : String;
 };
+
+
+
+//=================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 action receive(
   receivedQty : Integer,
@@ -244,12 +287,20 @@ function getSummary() returns {
 
 };
 
-entity PurchaseOrderItems as projection on db.PurchaseOrderItems {
+entity PurchaseOrderItems @(restrict: [
+    { grant: 'READ', to: 'Viewer' },
+    { grant: '*', to: ['PurchaseManager', 'Administrator'] }  
+])
+
+
+
+as projection on db.PurchaseOrderItems {
 *,
 product
 };
 
 @readonly
+ @(requires: 'Administrator')
 entity Suppliers as projection on db.Suppliers;
 
 @readonly
@@ -285,5 +336,21 @@ rejectedBy : String;
 reason     : String;
 }
 }
+
+
+
+// service AdminService @(requires: 'Admin') {
+//   entity Products as projection on db.Products;
+// }
+
+
+// service ManagerService @(requires: ['PurchaseManager', 'Administrator']) {
+//   entity PurchaseOrders as projection on db.PurchaseOrders;
+// }
+
+
+
+
+
 
 using from '../app/project1/annotations';
