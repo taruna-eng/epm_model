@@ -181,12 +181,14 @@ using { com.epm as db } from '../db/schema';
 service PurchasingService @(path: '/purchasing', requires: 'authenticated-user')  {
 
 @odata.draft.enabled
-@(requires: ['PurchaseManager', 'Administrator'])
+//@(requires: ['PurchaseManager', 'Administrator'])
 entity PurchaseOrders 
 @(restrict: [
-    { grant: 'READ', to: 'Viewer' },
-    { grant: ['READ', 'CREATE', 'UPDATE'], to: 'PurchaseManager'  },
-    { grant: '*', to: 'Administrator' }
+    { grant: 'READ', to: 'Viewer', where: 'status = ''Approved'' or status = ''Received''' },
+    { grant: ['READ', 'CREATE', 'UPDATE'], to: 'PurchaseManager', where: 'createdBy = $user'   },
+    { grant: '*', to: 'Administrator' , where: 'status = ''Submitted'''},
+
+    
   ])
 
 
@@ -229,7 +231,7 @@ action submit() returns {
   status  : String;
   message : String;
 };
- @(requires: 'PurchaseManager')
+  @(requires: ['PurchaseManager', 'Administrator'])
 action approve(
   comment : String(500)
 ) returns {
@@ -238,7 +240,7 @@ action approve(
   approvedAt : DateTime;
 };
 
-@(requires: 'PurchaseManager')
+ @(requires: ['PurchaseManager', 'Administrator'])
 action reject(
   reason : String(500)
 ) returns {
