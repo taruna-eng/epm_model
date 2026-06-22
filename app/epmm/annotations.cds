@@ -32,6 +32,12 @@ annotate service.Products with @(
         },
         {
             $Type : 'UI.ReferenceFacet',
+            Label : 'rohit',
+            ID : 'rohit',
+            Target : '@UI.FieldGroup#rohit',
+        },
+        {
+            $Type : 'UI.ReferenceFacet',
             Label : 'Stock & Pricing',
             ID : 'StockPricing',
             Target : '@UI.FieldGroup#StockPricing',
@@ -140,6 +146,7 @@ annotate service.Products with @(
         productName,
         category.categoryName,
         supplier.supplierName,
+        isAvailable,
     ],
     UI.DataPoint #price : {
         $Type : 'UI.DataPointType',
@@ -214,6 +221,28 @@ annotate service.Products with @(
                 $Type : 'UI.DataField',
                 Value : rating,
                 Label : 'Rating',
+            },
+        ],
+    },
+    UI.FieldGroup #rohit : {
+        $Type : 'UI.FieldGroupType',
+        Data : [
+            {
+                $Type : 'UI.DataField',
+                Value : ID,
+                Label : 'ID',
+            },
+            {
+                $Type : 'UI.DataField',
+                Value : isAvailable,
+            },
+            {
+                $Type : 'UI.DataField',
+                Value : currency_code,
+            },
+            {
+                $Type : 'UI.DataField',
+                Value : createdBy,
             },
         ],
     },
@@ -343,3 +372,22 @@ annotate service.Products with @UI.HeaderInfo : {
     Value : description
   }
 };
+annotate service.Products with {
+    isAvailable @(
+        Common.Label : 'isAvailable',
+        Common.ValueList : {
+            $Type : 'Common.ValueListType',
+            CollectionPath : 'Suppliers',
+            Parameters : [
+                {
+                    $Type : 'Common.ValueListParameterInOut',
+                    LocalDataProperty : isAvailable,
+                    ValueListProperty : 'isActive',
+                },
+            ],
+            Label : 'Isavail',
+        },
+        Common.ValueListWithFixedValues : false,
+    )
+};
+

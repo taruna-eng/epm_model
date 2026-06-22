@@ -25,3 +25,6 @@ module.exports = srv => {
 };
 
 
+// steps on how to navigate page map
+
+//

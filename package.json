@@ -2,7 +2,8 @@
   "name": "epmfinal",
   "version": "1.0.0",
   "dependencies": {
-    "@sap/cds": "^9"
+    "@sap/cds": "^9",
+    "@sap/xssec": "^4"
   },
   "devDependencies": {
     "@cap-js/sqlite": "^2.4",
@@ -22,5 +23,51 @@
     "app/epmm",
     "app/project1",
     "app/project2"
-  ]
+  ],
+
+
+
+
+
+ 
+  "cds": {
+    "requires": {
+      "auth": {
+        "kind": "xsuaa",
+        "[development]": {
+          "kind": "mocked",
+          "users": {
+            "viewer@test.com": {
+              "password": "pass",
+              "roles": ["Viewer"]
+            },
+            "manager@test.com": {
+              "password": "pass",
+              "roles": ["PurchaseManager"]
+            },
+            "admin@test.com": {
+              "password": "pass",
+              "roles": ["Administrator"]
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    }
+  }
+}
+    }
+  }
 }

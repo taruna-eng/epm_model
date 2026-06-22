@@ -259,28 +259,28 @@ type PurchaseOrderStatus : String(20) enum {
 }
 
 // ─── PURCHASE ORDERS ────────────────────────────
-entity PurchaseOrders : cuid, managed {
-  poNumber       : String(20);
-  supplier       : Association to Suppliers;
-  orderDate      : Date;
-  expectedDate   : Date;
-  totalAmount    : Decimal(12,2);
-  currency       : Currency;
-  status         : PurchaseOrderStatus default 'Draft';
-  notes          : String(500);
-  items          : Composition of many PurchaseOrderItems on items.purchaseOrder = $self;
-}
+// entity PurchaseOrders : cuid, managed {
+//   poNumber       : String(20);
+//   supplier       : Association to Suppliers;
+//   orderDate      : Date;
+//   expectedDate   : Date;
+//   totalAmount    : Decimal(12,2);
+//   currency       : Currency;
+//   status         : PurchaseOrderStatus default 'Draft';
+//   notes          : String(500);
+//   items          : Composition of many PurchaseOrderItems on items.purchaseOrder = $self;
+// }
 
-// ─── PURCHASE ORDER ITEMS ───────────────────────
-entity PurchaseOrderItems : cuid {
-  purchaseOrder   : Association to PurchaseOrders;
-  product         : Association to Products;
-  quantity        : Integer;
-  unitPrice       : Decimal(10,2);
-  currency        : Currency;
-  expectedDate    : Date;
-  receivedQty     : Integer default 0;
-}
+// // ─── PURCHASE ORDER ITEMS ───────────────────────
+// entity PurchaseOrderItems : cuid {
+//   purchaseOrder   : Association to PurchaseOrders;
+//   product         : Association to Products;
+//   quantity        : Integer;
+//   unitPrice       : Decimal(10,2);
+//   currency        : Currency;
+//   expectedDate    : Date;
+//   receivedQty     : Integer default 0;
+// }
 
 // ─── VIEW: LOW STOCK PRODUCTS ───────────────────
 entity LowStockProducts as select from Products {
@@ -294,3 +294,28 @@ entity LowStockProducts as select from Products {
   supplier.phone        as supplierPhone,
   category.categoryName as categoryName
 } where stock < minStock and isAvailable = true;
+
+
+entity PurchaseOrders : cuid, managed {
+  poNumber     : String(30);
+  supplier     : Association to Suppliers;
+  orderDate    : Date;
+  expectedDate : Date;
+  priority     : String(20);
+  totalAmount  : Decimal(12,2);
+  taxAmount    : Decimal(12,2);
+  netAmount    : Decimal(12,2);
+  currency     : Currency;
+  status       : String(20);
+
+  items : Composition of many PurchaseOrderItems
+            on items.order = $self;
+}
+
+entity PurchaseOrderItems : cuid {
+  order      : Association to PurchaseOrders;
+  product    : Association to Products;
+  quantity   : Integer;
+  unitPrice  : Decimal(10,2);
+  totalPrice : Decimal(12,2);
+}
